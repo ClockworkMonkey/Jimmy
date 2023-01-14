@@ -16,6 +16,8 @@
 		C6585A4529726F3800AA7EA2 /* JimmyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6585A4429726F3800AA7EA2 /* JimmyTests.swift */; };
 		C6585A4F29726F3800AA7EA2 /* JimmyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6585A4E29726F3800AA7EA2 /* JimmyUITests.swift */; };
 		C6585A5129726F3800AA7EA2 /* JimmyUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6585A5029726F3800AA7EA2 /* JimmyUITestsLaunchTests.swift */; };
+		C6585A5E29727EF700AA7EA2 /* yolov5s.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = C6585A5D29727EF700AA7EA2 /* yolov5s.mlmodel */; };
+		C6585A612972827900AA7EA2 /* RecognitionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6585A602972827900AA7EA2 /* RecognitionViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +51,8 @@
 		C6585A4A29726F3800AA7EA2 /* JimmyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JimmyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C6585A4E29726F3800AA7EA2 /* JimmyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JimmyUITests.swift; sourceTree = "<group>"; };
 		C6585A5029726F3800AA7EA2 /* JimmyUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JimmyUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		C6585A5D29727EF700AA7EA2 /* yolov5s.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = yolov5s.mlmodel; sourceTree = "<group>"; };
+		C6585A602972827900AA7EA2 /* RecognitionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecognitionViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,9 +103,11 @@
 		C6585A2C29726F3600AA7EA2 /* Jimmy */ = {
 			isa = PBXGroup;
 			children = (
+				C6585A5F29727F0000AA7EA2 /* MLModel */,
 				C6585A2D29726F3600AA7EA2 /* AppDelegate.swift */,
 				C6585A2F29726F3600AA7EA2 /* SceneDelegate.swift */,
 				C6585A3129726F3600AA7EA2 /* ViewController.swift */,
+				C6585A602972827900AA7EA2 /* RecognitionViewController.swift */,
 				C6585A3329726F3600AA7EA2 /* Main.storyboard */,
 				C6585A3629726F3700AA7EA2 /* Assets.xcassets */,
 				C6585A3829726F3700AA7EA2 /* LaunchScreen.storyboard */,
@@ -125,6 +131,14 @@
 				C6585A5029726F3800AA7EA2 /* JimmyUITestsLaunchTests.swift */,
 			);
 			path = JimmyUITests;
+			sourceTree = "<group>";
+		};
+		C6585A5F29727F0000AA7EA2 /* MLModel */ = {
+			isa = PBXGroup;
+			children = (
+				C6585A5D29727EF700AA7EA2 /* yolov5s.mlmodel */,
+			);
+			path = MLModel;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -258,7 +272,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C6585A5E29727EF700AA7EA2 /* yolov5s.mlmodel in Sources */,
 				C6585A3229726F3600AA7EA2 /* ViewController.swift in Sources */,
+				C6585A612972827900AA7EA2 /* RecognitionViewController.swift in Sources */,
 				C6585A2E29726F3600AA7EA2 /* AppDelegate.swift in Sources */,
 				C6585A3029726F3600AA7EA2 /* SceneDelegate.swift in Sources */,
 			);
@@ -440,11 +456,12 @@
 				DEVELOPMENT_TEAM = Q569HPLMA9;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Jimmy/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "用于 yolov5 测试。";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -468,11 +485,12 @@
 				DEVELOPMENT_TEAM = Q569HPLMA9;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Jimmy/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "用于 yolov5 测试。";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
