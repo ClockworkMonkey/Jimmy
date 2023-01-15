@@ -21,8 +21,8 @@ class ViewController: UIViewController {
     private var captureVideoDataOutput = AVCaptureVideoDataOutput()
     private var bufferSize: CGSize = .zero
     private var visionRequests = [VNRequest]()
-    private var detectionOverlayLayer: CALayer! = nil
-    private let videoDataOutputQueue = DispatchQueue(label: "VideoDataOutput", qos: .userInitiated, attributes: [], autoreleaseFrequency: .workItem)
+    private var objectIdentificationLayer: CALayer! = nil
+    private let videoDataOutputQueue = DispatchQueue(label: "VideoDataOutputQueue", qos: .userInitiated, attributes: [], autoreleaseFrequency: .workItem)
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,12 +32,9 @@ class ViewController: UIViewController {
     
     override func viewDidLayoutSubviews() {
         setupPreviewLayer()
+        setupDectionLayer()
+        setupVision()
     }
-    
-    @IBAction func btnAction(_ sender: UIButton) {
-        print(previewView.frame)
-    }
-    
 
 }
 
@@ -47,7 +44,8 @@ extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
             return
         }
-        let imageRequestHandler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .up, options: [:])
+        let imageOrientation = getImagePropertyOrientation()
+        let imageRequestHandler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: imageOrientation, options: [:])
         do {
             try imageRequestHandler.perform(self.visionRequests)
         } catch {
@@ -72,7 +70,7 @@ extension ViewController {
         }
         
         captureSession.beginConfiguration()
-        captureSession.sessionPreset = .medium
+        captureSession.sessionPreset = .vga640x480
         
         if captureSession.canAddInput(deviceInput) {
             captureSession.addInput(deviceInput)
@@ -133,19 +131,19 @@ extension ViewController {
     func setupVision() -> NSError? {
         let error: NSError! = nil
         
-        guard let yolov5sModelURL = Bundle.main.url(forResource: "yolov5s", withExtension: "mlmodelc") else {
+        guard let mlModelURL = Bundle.main.url(forResource: "yolov5s", withExtension: "mlmodelc") else {
             return NSError(domain: "ViewController", code: -1, userInfo: [NSLocalizedDescriptionKey: "Model file is missing!"])
         }
         do {
-            let visionModel = try VNCoreMLModel(for: MLModel(contentsOf: yolov5sModelURL))
-            let objectRecognition = VNCoreMLRequest(model: visionModel) { request, error in
+            let mlModel = try VNCoreMLModel(for: MLModel(contentsOf: mlModelURL))
+            let imageBasedRequest = VNCoreMLRequest(model: mlModel) { request, error in
                 DispatchQueue.main.async {
-                    if let results = request.results {
-                        self.drawVisonRequestResults(results)
+                    if let observationRequest = request.results {
+                        self.drawVisonRequestResults(observationRequest)
                     }
                 }
             }
-            self.visionRequests = [objectRecognition]
+            self.visionRequests = [imageBasedRequest]
         } catch {
             print("------> " + "Error msg: " + error.localizedDescription)
         }
@@ -158,7 +156,7 @@ extension ViewController {
     func drawVisonRequestResults(_ results: [Any]) {
         CATransaction.begin()
         CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
-        detectionOverlayLayer.sublayers = nil
+        objectIdentificationLayer.sublayers = nil
         for observation in results where observation is VNRecognizedObjectObservation {
             guard let objectObservation = observation as? VNRecognizedObjectObservation else { continue }
             let topLableObservation = objectObservation.labels[0]
@@ -166,12 +164,41 @@ extension ViewController {
             let shapeLayer = self.createRoundedRectLayer(with: objectBounds)
             let textLayer = self.createTextSubLayer(in: objectBounds, identifer: topLableObservation.identifier, confidence: topLableObservation.confidence)
             shapeLayer.addSublayer(textLayer)
-            detectionOverlayLayer.addSublayer(shapeLayer)
+            objectIdentificationLayer.addSublayer(shapeLayer)
         }
+        self.updateObjectIdentificationLayer()
+        CATransaction.commit()
+    }
+    
+    func updateObjectIdentificationLayer() {
+        let bounds = videoViewLayer.bounds
+        var scale: CGFloat
+        let xScale: CGFloat = bounds.size.width / bufferSize.height
+        let yScale: CGFloat = bounds.size.height / bufferSize.width
+        scale = fmax(xScale, yScale)
+        if scale.isInfinite {
+            scale = 1.0
+        }
+        CATransaction.begin()
+        CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
+        objectIdentificationLayer.setAffineTransform(CGAffineTransform(rotationAngle: CGFloat(.pi / 2.0)).scaledBy(x: scale, y: -scale))
+        objectIdentificationLayer.position = CGPoint(x: bounds.midX, y: bounds.midY)
+        CATransaction.commit()
     }
     
     /*
-     添加物体识别矩形
+     被识别物体图层
+     */
+    func setupDectionLayer() {
+        objectIdentificationLayer = CALayer()
+        objectIdentificationLayer.name = "Object Identification Layer"
+        objectIdentificationLayer.bounds = CGRect(origin: .zero, size: bufferSize)
+        objectIdentificationLayer.position = CGPoint(x: videoViewLayer.bounds.midX, y: videoViewLayer.bounds.midY)
+        videoViewLayer.addSublayer(objectIdentificationLayer)
+    }
+    
+    /*
+     添加被识别物体轮廓
      */
     func createRoundedRectLayer(with bounds: CGRect) -> CALayer {
         let shaperLayer = CALayer()
@@ -184,19 +211,40 @@ extension ViewController {
     }
     
     /*
-     添加物体识别标签
+     添加被识别物体标签
      */
     func createTextSubLayer(in bounds: CGRect, identifer: String, confidence: VNConfidence) -> CATextLayer {
+        let textLayerSize = CGSize(width: 70.0, height: 25.0)
         let textLayer = CATextLayer()
         textLayer.name = "Object Lable Layer"
-        textLayer.string = String(format: "\(identifer)\nConfidence: %.2f", confidence)
-        textLayer.bounds = CGRect(x: 0, y: 0, width: bounds.size.height - 10, height: bounds.size.width - 10)
-        textLayer.position = CGPoint(x: bounds.midX, y: bounds.midY)
+        textLayer.string = String(format: "物体：\(identifer)\n相似度：%.2f", confidence)
+        textLayer.fontSize = 8.0
+        textLayer.bounds = CGRect(origin: .zero, size: textLayerSize)
+        textLayer.position = CGPoint(x: bounds.origin.x - textLayerSize.height / 2, y: bounds.origin.y + textLayerSize.width / 2)
         textLayer.shadowOpacity = 0.7
         textLayer.shadowOffset = CGSize(width: 2.0, height: 2.0)
         textLayer.foregroundColor = CGColor(colorSpace: CGColorSpaceCreateDeviceRGB(), components: [0.0, 0.0, 0.0, 1.0])
+        textLayer.backgroundColor = CGColor(colorSpace: CGColorSpaceCreateDeviceRGB(), components: [1.0, 1.0, 0.9, 0.4])
         textLayer.contentsScale = 2.0
-        textLayer.setAffineTransform(CGAffineTransform(rotationAngle: CGFloat(.pi / 2.0)).scaledBy(x: 1.0, y: 1.0))
+        textLayer.setAffineTransform(CGAffineTransform(rotationAngle: CGFloat(.pi / 2.0)).scaledBy(x: 1.0, y: -1.0))
         return textLayer
+    }
+    
+    public func getImagePropertyOrientation() -> CGImagePropertyOrientation {
+        let deviceOrientation = UIDevice.current.orientation
+        let imageOrientation: CGImagePropertyOrientation
+        switch deviceOrientation {
+        case .portraitUpsideDown:
+            imageOrientation = .left
+        case .landscapeLeft:
+            imageOrientation = .upMirrored
+        case .landscapeRight:
+            imageOrientation = .down
+        case .portrait:
+            imageOrientation = .up
+        default:
+            imageOrientation = .up
+        }
+        return imageOrientation
     }
 }
